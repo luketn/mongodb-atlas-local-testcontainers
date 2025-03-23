@@ -3,17 +3,30 @@ package com.mycodefu;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.search.FuzzySearchOptions;
+import com.mongodb.client.model.search.SearchOperator;
+import com.mongodb.client.model.search.SearchOptions;
 import com.mongodb.client.result.InsertOneResult;
 import org.bson.BsonType;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonRepresentation;
+import org.bson.conversions.Bson;
+import org.bson.json.JsonWriterSettings;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.search.SearchPath.fieldPath;
 
 public class PersonDataAccess implements AutoCloseable {
+    static Logger log = LoggerFactory.getLogger(PersonDataAccess.class);
+
     final MongoClient mongoClient;
     final MongoCollection<Person> collection;
 
@@ -51,6 +64,38 @@ public class PersonDataAccess implements AutoCloseable {
 
     public void deletePerson(String id) {
         this.collection.deleteOne(eq("_id", new ObjectId(id)));
+    }
+
+    public List<Person> findPersonByBio(String query) {
+        //use Atlas Search to find a person by their bio
+        List<Bson> aggregateStages = List.of(
+                Aggregates.search(
+                        SearchOperator
+                                .text(fieldPath("bio"), query)
+                                .fuzzy(FuzzySearchOptions
+                                        .fuzzySearchOptions()
+                                        .maxEdits(2)
+                                        .prefixLength(2)
+                                        .maxExpansions(50)
+                                )
+                , SearchOptions.searchOptions().index("person_search"))
+        );
+
+        if (log.isTraceEnabled()) {
+            for (Bson aggregateStage : aggregateStages) {
+                log.trace(aggregateStage.toBsonDocument().toJson(JsonWriterSettings.builder().indent(true).build()));
+            }
+        }
+
+        ArrayList<Person> results = collection.aggregate(aggregateStages, Person.class).into(new ArrayList<>());
+
+        if (log.isTraceEnabled()) {
+            for (Person result : results) {
+                log.trace(result.toString());
+            }
+        }
+
+        return results;
     }
 
     @Override

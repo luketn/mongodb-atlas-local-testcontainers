@@ -13,6 +13,7 @@ import org.testcontainers.shaded.org.awaitility.Awaitility;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,6 +28,7 @@ class PersonDataAccessTest {
 
     @BeforeAll
     static void beforeAll() {
+        System.out.println("Initializing data access with MongoDB connection string: " + mongoDBContainer.getConnectionString());
         personDataAccess = new PersonDataAccess(mongoDBContainer.getConnectionString());
 
         //insert a few records for testing
@@ -50,7 +52,8 @@ class PersonDataAccessTest {
                      "dynamic": false,
                      "fields": {
                        "name": {
-                           "type": "string"
+                           "type": "string",
+                           "analyzer": "lucene.standard"
                        },
                        "age": {
                          "type": "number",
@@ -66,7 +69,8 @@ class PersonDataAccessTest {
                          }
                        ],
                        "bio": {
-                           "type": "string"
+                           "type": "string",
+                           "analyzer": "lucene.standard"
                        }
                      }
                    }
@@ -82,6 +86,42 @@ class PersonDataAccessTest {
                     return personIndex.getString("status").equals("READY");
                 });
         System.out.printf("Index created and ready in %dms%n", Duration.between(startTime, Instant.now()).toMillis());
+    }
+
+    @Test
+    void shouldFindPersonByBioWord_dedicated() {
+        // Given
+        String word = "dedicated";
+
+        // When
+        List<Person> dedicatedPeople = personDataAccess.findPersonByBio(word);
+
+        // Then
+        assertEquals(3, dedicatedPeople.size());
+        assertTrue(dedicatedPeople.stream().allMatch(person -> person.bio().contains(word)));
+    }
+
+    @Test
+    void shouldFindPersonByBioWord_fuzzy_yesr() {
+        // Given year (with a typo)
+        String word = "yesr";
+
+        // When fuzzy searched
+        List<Person> yearPeople = personDataAccess.findPersonByBio(word);
+
+        // Then match bios with 'year', or 'years'
+        assertEquals(4, yearPeople.size());
+        assertTrue(yearPeople.stream().allMatch(person -> person.bio().contains("year")));
+
+        //find the surrounding words and print them
+        yearPeople.forEach(person -> {
+            String bio = person.bio();
+            int index = bio.indexOf("year");
+            int start = Math.max(0, index - 20);
+            int end = Math.min(bio.length(), index + word.length() + 20);
+            String surroundingYear = bio.substring(start, end);
+            System.out.println(surroundingYear);
+        });
     }
 
     @Test
