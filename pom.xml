@@ -18,5 +18,6 @@
     <modules>
         <module>simple-crud-test</module>
         <module>simple-search-test</module>
+        <module>advanced-search-seed-data-test</module>
     </modules>
 </project>

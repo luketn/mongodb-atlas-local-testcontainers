@@ -1,0 +1,28 @@
+{
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "name": {
+        "type": "string",
+        "analyzer": "lucene.standard"
+      },
+      "age": {
+        "type": "number",
+        "representation": "int64",
+        "indexDoubles": false
+      },
+      "job": [
+        {
+          "type": "token"
+        },
+        {
+          "type": "stringFacet"
+        }
+      ],
+      "bio": {
+        "type": "string",
+        "analyzer": "lucene.standard"
+      }
+    }
+  }
+}
