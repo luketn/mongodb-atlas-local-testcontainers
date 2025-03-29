@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.testcontainers.shaded.org.apache.commons.lang3.ArrayUtils.toArray;
 
 @Testcontainers
 class PersonDataAccessSearchTest {
@@ -32,7 +33,7 @@ class PersonDataAccessSearchTest {
         Instant start = Instant.now();
         mongoDBContainer.execInContainer(ExecConfig.builder()
                 .workDir("/tmp/seed-data")
-                .command(new String[]{"bash", "seed-data.sh"})
+                .command(toArray("bash", "seed-data.sh"))
                 .build());
         System.out.println("Loading seed data took: " + Instant.now().minusMillis(start.toEpochMilli()).toEpochMilli() + "ms");
 
