@@ -11,7 +11,7 @@ import org.testcontainers.mongodb.MongoDBAtlasLocalContainer;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
-class PersonDataCRUDAccessTest {
+class PersonDataAccessCRUDTest {
 
     @Container
     private static final MongoDBAtlasLocalContainer mongoDBContainer = new MongoDBAtlasLocalContainer("mongodb/mongodb-atlas-local:8.0.5");
