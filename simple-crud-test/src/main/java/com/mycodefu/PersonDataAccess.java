@@ -9,6 +9,8 @@ import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonRepresentation;
 import org.bson.types.ObjectId;
 
+import java.util.Objects;
+
 import static com.mongodb.client.model.Filters.eq;
 
 public class PersonDataAccess implements AutoCloseable {
@@ -21,8 +23,13 @@ public class PersonDataAccess implements AutoCloseable {
             String id,
             String name,
             int age,
+            String job,
             String bio
-    ) { }
+    ) {
+        public static Person of(String name, int age, String job, String bio) {
+            return new Person(null, name, age, job, bio);
+        }
+    }
 
     public PersonDataAccess(String connectionString) {
         this.mongoClient = MongoClients.create(connectionString);
@@ -31,7 +38,7 @@ public class PersonDataAccess implements AutoCloseable {
 
     public String insertPerson(Person person) {
         InsertOneResult insertOneResult = this.collection.insertOne(person);
-        return insertOneResult.getInsertedId().asObjectId().getValue().toHexString();
+        return Objects.requireNonNull(insertOneResult.getInsertedId()).asObjectId().getValue().toHexString();
     }
 
     public Person getPerson(String id) {

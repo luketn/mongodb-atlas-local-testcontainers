@@ -24,11 +24,11 @@ class PersonDataAccessTest {
     @Test
     void shouldInsertAndRetrievePerson() {
         // Given
-        Person person = new Person(
-                null,
+        Person person = Person.of(
                 "John Doe",
                 30,
-                "Software Developer"
+                "Software Developer",
+                "John is a software developer who loves to code."
         );
 
         // When
@@ -41,17 +41,18 @@ class PersonDataAccessTest {
         assertEquals(id, retrievedPerson.id());
         assertEquals("John Doe", retrievedPerson.name());
         assertEquals(30, retrievedPerson.age());
-        assertEquals("Software Developer", retrievedPerson.bio());
+        assertEquals("Software Developer", retrievedPerson.job());
+        assertEquals("John is a software developer who loves to code.", retrievedPerson.bio());
     }
 
     @Test
     void shouldUpdatePerson() {
         // Given
-        Person person = new Person(
-                null,
+        Person person = Person.of(
                 "Jane Smith",
                 25,
-                "Data Scientist"
+                "Data Scientist",
+                "Jane is a data scientist who loves to analyze data."
         );
         String id = personDataAccess.insertPerson(person);
 
@@ -60,24 +61,25 @@ class PersonDataAccessTest {
                 id,
                 "Jane Smith",
                 26,
-                "Senior Data Scientist"
+                "Senior Data Scientist",
+                "Jane is a senior data scientist who loves to analyze data."
         );
         personDataAccess.updatePerson(updatedPerson);
         Person retrievedPerson = personDataAccess.getPerson(id);
 
         // Then
         assertEquals(26, retrievedPerson.age());
-        assertEquals("Senior Data Scientist", retrievedPerson.bio());
+        assertEquals("Senior Data Scientist", retrievedPerson.job());
     }
 
     @Test
     void shouldDeletePerson() {
         // Given
-        Person person = new Person(
-                null,
-                "Bob Johnson",
+        Person person = Person.of(
+                "Bill Lumbergh",
                 40,
-                "Manager"
+                "Manager",
+                "Bill is a manager of tech teams. Often asks 'What's happening?'."
         );
         String id = personDataAccess.insertPerson(person);
 
