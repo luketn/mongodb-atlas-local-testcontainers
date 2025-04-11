@@ -2,6 +2,8 @@ package com.mycodefu;
 
 import com.mongodb.client.ListSearchIndexesIterable;
 import com.mycodefu.PersonDataAccess.Person;
+import com.mycodefu.atlassearch.util.IndexValidator;
+import com.mycodefu.atlassearch.util.IndexValidator.IndexValidationResults;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.*;
@@ -50,7 +52,7 @@ class PersonDataAccessSearchTest {
         System.out.println("Loading seed data took: " + Instant.now().minusMillis(startSeedDataRestore.toEpochMilli()).toEpochMilli() + "ms");
 
         Instant startIndex = Instant.now();
-        String personSearchMappings = Resources.toString(Resources.getResource("seed-data/dump/examples/person_search.json"), UTF_8);
+        String personSearchMappings = Resources.toString(Resources.getResource("atlas-search-indexes/examples/person/person_search.json"), UTF_8);
         personDataAccess.collection.createSearchIndex("person_search", BsonDocument.parse(personSearchMappings));
         Awaitility.await()
                 .atMost(10, TimeUnit.SECONDS)
@@ -96,5 +98,18 @@ class PersonDataAccessSearchTest {
             String surroundingYear = bio.substring(start, end);
             System.out.println(surroundingYear);
         });
+    }
+
+    @Test
+    void checkIndexValidation() {
+        // Given
+        String indexName = "person_search";
+
+        // When
+        IndexValidationResults validationResults = IndexValidator.validateIndexes(personDataAccess.collection, indexName);
+        validationResults.printResults();
+
+        // Then
+        assertTrue(validationResults.valid());
     }
 }
