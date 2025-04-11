@@ -93,8 +93,9 @@ public class PersonDataAccess implements AutoCloseable {
         ArrayList<Person> results = collection.aggregate(aggregateStages, Person.class).into(new ArrayList<>());
 
         if (log.isTraceEnabled()) {
-            for (Person result : results) {
-                log.trace(result.toString());
+            log.trace("Found {} results", results.size());
+            if (!results.isEmpty()) {
+                log.trace("First result: {}", results.getFirst());
             }
         }
 

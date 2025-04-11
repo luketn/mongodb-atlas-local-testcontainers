@@ -2,6 +2,8 @@ package com.mycodefu.atlassearch.util;
 
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +14,7 @@ import java.util.Optional;
 
 
 public class IndexValidator {
+    static Logger log = LoggerFactory.getLogger(IndexValidator.class);
 
     // Only check the following keys for equality, ignoring other keys which may be added by MongoDB internally.
     public static final List<String> check_equality_of_keys = List.of("type", "normalizer", "representation", "analyzer", "indexDoubles", "indexIntegers");
@@ -26,7 +29,7 @@ public class IndexValidator {
             } else {
                 System.out.println("Index validation failed: " + message);
                 for (InvalidField invalidField : invalidFields) {
-                    String fieldPrefix = invalidField.fieldParent == null || invalidField.fieldParent.isEmpty() ? "" : invalidField.fieldParent + ".";
+                    String fieldPrefix = invalidField.fieldParent.isEmpty() ? "" : invalidField.fieldParent + ".";
                     String fieldPath = fieldPrefix + invalidField.fieldName;
                     System.out.println("Invalid field: " + fieldPath + ": " + invalidField.message);
                 }
@@ -124,13 +127,21 @@ public class IndexValidator {
                 Object actualValue = actualField.get(key);
                 if (!expectedValue.equals(actualValue)) {
                     return Optional.of(new InvalidField(fieldParent, fieldName, "Field value mismatch. Expected: '%s', actual: '%s'".formatted(expectedValue, actualValue)));
+                } else {
+                    if (log.isTraceEnabled()) {
+                        log.trace("Field '%s%s%s' matches for key '%s': expected '%s', actual '%s'".formatted(fieldParent, fieldParent.isEmpty() ? "" : ".", fieldName, key, expectedValue, actualValue));
+                    }
                 }
             }
         }
         if (expectedField.containsKey("fields") && actualField.containsKey("fields")) {
             Document expectedFields = expectedField.get("fields", Document.class);
             Document actualFields = actualField.get("fields", Document.class);
-            fieldParent = "%s.%s".formatted(fieldParent, fieldName);
+            if (fieldParent.isEmpty()) {
+                fieldParent = fieldName;
+            } else {
+                fieldParent = "%s.%s".formatted(fieldParent, fieldName);
+            }
             compareFields(expectedFields, actualFields, fieldParent, invalidFieldsSoFar);
         }
         return Optional.empty();
